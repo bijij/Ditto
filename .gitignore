@@ -1,0 +1,15 @@
+# Python files
+__pycache__/
+
+
+# editor files
+.vscode/
+
+# Environment specific files
+.env
+config.yml
+pm2.yml
+
+# logging files
+*.log
+

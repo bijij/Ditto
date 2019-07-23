@@ -1,0 +1,20 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+pylint = "*"
+autopep8 = "*"
+
+[packages]
+discord-py = "*"
+donphan = {git = "https://github.com/bijij/Donphan.git"}
+pyyaml = "*"
+uvloop = {version = "*", os_name = "== 'posix'"}
+
+[requires]
+python_version = "3.7"
+
+[scripts]
+start = "python -m bot"

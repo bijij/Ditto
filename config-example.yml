@@ -1,0 +1,21 @@
+!Config
+
+  LOGGING_LEVEL: "INFO"
+
+  APP_NAME: "Ditto"
+  DESCRIPTION: "Discord.py bot shell."
+
+  DONPHAN_DSN: !env "POSTGRES_DSN"
+  DELETE_TABLES_ON_STARTUP: yes
+
+  TOKEN: !ENV 'TOKEN'
+
+  PREFIXES:
+    - "!"
+  
+  EXTENSIONS: 
+
+    # Core Functionality
+    'bot.cogs.core.admin': ~
+    'bot.cogs.core.git': ~
+    
