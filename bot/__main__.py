@@ -5,11 +5,12 @@ import logging
 import discord
 from discord.ext import commands
 
-import bot.config
-from bot.config import config as BOT_CONFIG
-from bot.utils import Bot
+import bot.config as config
+import bot.timers as timers
 
 from donphan import create_pool, create_tables
+
+from bot.config import config as BOT_CONFIG
 
 try:
     import uvloop
@@ -21,7 +22,7 @@ else:
 _start_time = datetime.datetime.utcnow()
 
 # Create bot instance
-bot.config._bot = bot = Bot(
+config._bot = timers._bot = bot = commands.Bot(
     command_prefix=commands.when_mentioned_or(*BOT_CONFIG.PREFIXES)
 )
 
@@ -50,11 +51,20 @@ if __name__ == '__main__':
 
     # Load extensions from config
     for extension in BOT_CONFIG.EXTENSIONS:
-        bot.load_extension(extension)
+        try:
+            bot.load_extension(extension)
+        except Exception as e:
+            bot.log.error(f'Failed to load extension: {extension}')
+            bot.log.error(f'\t{type(e).__name__}: {e}')
 
     # setup database
     run = asyncio.get_event_loop().run_until_complete
     run(create_pool(BOT_CONFIG.DONPHAN_DSN))
     run(create_tables(drop_if_exists=BOT_CONFIG.DELETE_TABLES_ON_STARTUP))
+
+    # Start the timer task
+    bot._active_timer = asyncio.Event(loop=bot.loop)
+    bot._current_timer = None
+    bot._timer_task = bot.loop.create_task(timers._dispatch_timers())
 
     bot.run(BOT_CONFIG.TOKEN)

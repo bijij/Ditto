@@ -4,20 +4,20 @@ import discord
 from discord.ext import commands
 
 from bot.config import config as BOT_CONFIG
-from bot.utils import Bot, Context
+from bot.utils import checks
 
 
 class Git(commands.Cog):
     """Bot management commands."""
 
-    def __init__(self, bot: Bot):
+    def __init__(self, bot: commands.Bot):
         self.bot = bot
 
-    async def cog_check(self, ctx: Context) -> bool:
-        return self.bot.is_owner(ctx.author)
+    async def cog_check(self, ctx: commands.Context) -> bool:
+        return await checks.is_owner(ctx)
 
     @commands.command(name="pull", hidden=True)
-    async def pull(self, ctx: Context):
+    async def pull(self, ctx: commands.Context):
         """Pulls the most recent version of the repository."""
         p = await asyncio.create_subprocess_exec(
             'git', 'pull',
@@ -49,7 +49,7 @@ class Git(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(name='restart')
-    async def restart(self, ctx: Context, arg: str = None):
+    async def restart(self, ctx: commands.Context, arg: str = None):
         """Restarts the bot."""
         if arg == 'pull':
             await ctx.invoke(self.pull)
@@ -63,5 +63,5 @@ class Git(commands.Cog):
         await self.bot.logout()
 
 
-def setup(bot: Bot):
+def setup(bot: commands.Bot):
     bot.add_cog(Git(bot))
