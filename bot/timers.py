@@ -97,7 +97,7 @@ async def _call_short_timer(seconds: int, timer: Timer):
 
 async def _dispatch_timers():
 
-    await Timers.create_table()
+    await Timers.create()
 
     try:
         while not _bot.is_closed():

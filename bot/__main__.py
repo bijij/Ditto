@@ -1,14 +1,17 @@
 import asyncio
 import datetime
+import inspect
 import logging
+import traceback
 
 import discord
 from discord.ext import commands
+from donphan import create_pool, create_tables, create_views
 
 import bot.config as config
 import bot.timers as timers
 
-from donphan import create_pool, create_tables
+from bot.help import EmbedHelpCommand
 
 from bot.config import config as BOT_CONFIG
 
@@ -23,8 +26,15 @@ _start_time = datetime.datetime.utcnow()
 
 # Create bot instance
 config._bot = timers._bot = bot = commands.Bot(
-    command_prefix=commands.when_mentioned_or(*BOT_CONFIG.PREFIXES)
+    command_prefix=commands.when_mentioned_or(*BOT_CONFIG.PREFIXES),
+    activity=discord.Activity(
+        name=f"for Commands: {BOT_CONFIG.PREFIXES[0]}help", type=discord.ActivityType.watching),
+    case_insensitive=True,
+    help_command=EmbedHelpCommand(dm_help=None, dm_help_threshold=500),
 )
+
+bot.__version__ = BOT_CONFIG.VERSION
+bot._start_time = _start_time
 
 # Setup logging
 bot.log = logging.getLogger(__name__)
@@ -47,7 +57,51 @@ async def on_ready():
     bot.log.info(f'\tTook: {datetime.datetime.utcnow() - _start_time}')
 
 
-if __name__ == '__main__':
+@bot.event
+async def on_command_error(ctx: commands.Context, e: Exception):
+    # Ignore if CommandNotFound
+    if isinstance(e, commands.CommandNotFound):
+        return
+
+    # Ignore if command has on error handler
+    if hasattr(ctx.command, 'on_error'):
+        return
+
+    # Ignore if cog has a command error handler
+    if ctx.cog is not None:
+        if commands.Cog._get_overridden_method(ctx.cog.cog_command_error) is not None:
+            return
+
+    # Respond with error message if CheckFailure, CommandDisabled, CommandOnCooldown or UserInputError
+    if isinstance(e, (commands.CheckFailure, commands.CommandOnCooldown, commands.UserInputError)):
+        return await ctx.send(embed=discord.Embed(
+            title=f'Error with command: {ctx.command.name}',
+            description=str(e)
+        ))
+
+    # Otherwise log error
+    bot.log.error(f'Error with command: {ctx.command.name}')
+    bot.log.error(f'{type(e).__name__}: {e}')
+    bot.log.error(
+        "".join(traceback.format_exception(type(e), e, e.__traceback__)))
+
+    embed = discord.Embed()
+
+    # Send to user
+    embed = discord.Embed(
+        title=f'Error with command: {ctx.command.name}',
+        description=f'```py\n{type(e).__name__}: {e}\n```'
+    )
+    await ctx.send(embed=embed)
+
+    # Send to error log channel
+    embed.add_field(
+        name='Channel', value=f'<#{ctx.channel.id}> (#{ctx.channel.name})')
+    embed.add_field(name='User', value=f'<@{ctx.author.id}> ({ctx.author})')
+    await BOT_CONFIG.ERROR_LOG_CHANNEL.send(embed=embed)
+
+
+if __name__ == "__main__":
 
     # Load extensions from config
     for extension in BOT_CONFIG.EXTENSIONS:
@@ -56,11 +110,16 @@ if __name__ == '__main__':
         except Exception as e:
             bot.log.error(f'Failed to load extension: {extension}')
             bot.log.error(f'\t{type(e).__name__}: {e}')
+            bot.log.error(
+                "".join(traceback.format_exception(type(e), e, e.__traceback__)))
 
     # setup database
     run = asyncio.get_event_loop().run_until_complete
-    run(create_pool(BOT_CONFIG.DONPHAN_DSN))
-    run(create_tables(drop_if_exists=BOT_CONFIG.DELETE_TABLES_ON_STARTUP))
+    run(create_pool(BOT_CONFIG.DONPHAN.DSN, server_settings={
+        'application_name': BOT_CONFIG.DONPHAN.APPLICATION_NAME}
+    ))
+    run(create_tables(drop_if_exists=BOT_CONFIG.DONPHAN.DELETE_TABLES_ON_STARTUP))
+    run(create_views(drop_if_exists=BOT_CONFIG.DONPHAN.DELETE_VIEWS_ON_STARTUP))
 
     # Start the timer task
     bot._active_timer = asyncio.Event(loop=bot.loop)

@@ -1,5 +1,8 @@
+import copy
 import inspect
 import re
+
+from typing import Union
 
 import discord
 from discord.ext import commands
@@ -63,6 +66,18 @@ class Admin(commands.Cog):
         await ctx.send(embed=discord.Embed(
             title=f'Succesfully reloaded extension: {extension}.'
         ))
+
+    @commands.command(name="sudo")
+    async def sudo(self, ctx, user: Union[discord.Member, discord.User], *, command: str):
+        """Run a command as another user."""
+        msg = copy.copy(ctx.message)
+        msg.author = user
+        msg.content = ctx.prefix + command
+        new_ctx = await self.bot.get_context(msg)
+        try:
+            await self.bot.invoke(new_ctx)
+        except commands.CommandInvokeError as e:
+            raise e.original
 
     @commands.command(name='eval')
     async def eval(self, ctx: commands.Context, *, code: Code = []):

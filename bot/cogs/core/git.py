@@ -16,7 +16,7 @@ class Git(commands.Cog):
     async def cog_check(self, ctx: commands.Context) -> bool:
         return await checks.is_owner(ctx)
 
-    @commands.command(name="pull", hidden=True)
+    @commands.command(name="pull")
     async def pull(self, ctx: commands.Context):
         """Pulls the most recent version of the repository."""
         p = await asyncio.create_subprocess_exec(
