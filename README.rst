@@ -20,6 +20,8 @@ you can then setup the environment using:
 
     pipenv install
 
+Ensure you create a `config.yml` with the required properties.
+
 The bot can be launched using
 
 .. code-block:: bash
