@@ -6,12 +6,6 @@
   DESCRIPTION: "Discord.py bot shell."
   VERSION: '1.0.0'
 
-  DONPHAN: !Config
-    DSN: !ENV "POSTGRES_DSN"
-    DELETE_TABLES_ON_STARTUP: no
-    DELETE_VIEWS_ON_STARTUP: no
-    APPLICATION_NAME: 'Ditto: Discord bot'
-
   TOKEN: !ENV 'TOKEN'
 
   PREFIXES:

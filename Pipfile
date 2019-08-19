@@ -9,7 +9,6 @@ autopep8 = "*"
 
 [packages]
 discord-py = "*"
-donphan = {git = "https://github.com/bijij/Donphan.git"}
 pyyaml = "*"
 uvloop = {version = "*", os_name = "== 'posix'"}
 

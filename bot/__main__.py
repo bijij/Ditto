@@ -6,10 +6,8 @@ import traceback
 
 import discord
 from discord.ext import commands
-from donphan import create_pool, create_tables, create_views
 
 import bot.config as config
-import bot.timers as timers
 
 from bot.help import EmbedHelpCommand
 
@@ -25,7 +23,7 @@ else:
 _start_time = datetime.datetime.utcnow()
 
 # Create bot instance
-config._bot = timers._bot = bot = commands.Bot(
+config._bot = bot = commands.Bot(
     command_prefix=commands.when_mentioned_or(*BOT_CONFIG.PREFIXES),
     activity=discord.Activity(
         name=f"for Commands: {BOT_CONFIG.PREFIXES[0]}help", type=discord.ActivityType.watching),
@@ -112,18 +110,5 @@ if __name__ == "__main__":
             bot.log.error(f'\t{type(e).__name__}: {e}')
             bot.log.error(
                 "".join(traceback.format_exception(type(e), e, e.__traceback__)))
-
-    # setup database
-    run = asyncio.get_event_loop().run_until_complete
-    run(create_pool(BOT_CONFIG.DONPHAN.DSN, server_settings={
-        'application_name': BOT_CONFIG.DONPHAN.APPLICATION_NAME}
-    ))
-    run(create_tables(drop_if_exists=BOT_CONFIG.DONPHAN.DELETE_TABLES_ON_STARTUP))
-    run(create_views(drop_if_exists=BOT_CONFIG.DONPHAN.DELETE_VIEWS_ON_STARTUP))
-
-    # Start the timer task
-    bot._active_timer = asyncio.Event(loop=bot.loop)
-    bot._current_timer = None
-    bot._timer_task = bot.loop.create_task(timers._dispatch_timers())
 
     bot.run(BOT_CONFIG.TOKEN)

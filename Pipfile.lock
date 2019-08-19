@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "fc974aef3b780ab30aeb70aeeeb25ff8f9392119662cf7be05871caf26fb5f7f"
+            "sha256": "170b5704536177b8040fda7de40e10318593eda328df46a8fb647334e3e2f451"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -70,10 +70,6 @@
             ],
             "index": "pypi",
             "version": "==1.2.3"
-        },
-        "donphan": {
-            "git": "https://github.com/bijij/Donphan.git",
-            "ref": "4a1940eaf3f70dfa1eef561e4922f5d9bbd7d743"
         },
         "idna": {
             "hashes": [

@@ -1,7 +1,7 @@
 Ditto
 =====
 
-Ditto is a discord bot framework using the `discord.py <https://github.com/rapptz/discord.py>`_ library and `Donphan <https://github.com/bijij/donphan>`_ ORM.
+Ditto is a discord bot framework using the `discord.py <https://github.com/rapptz/discord.py>`_ library.
 
 Getting Started
 ---------------
