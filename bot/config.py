@@ -48,6 +48,19 @@ def _channel_constructor(loader: yaml.Loader, node: yaml.Node):
     return lambda: _bot.get_guild(guild_id).get_channel(channel_id)
 
 
+def _message_constructor(loader: yaml.Loader, node: yaml.Node):
+    """Implements a custom YAML tak for loading `discord.Message` objects.
+
+    Example usage:
+        key: !channel guild_id channel_id message_id
+
+    Note: This returns a coroutine which must be awaited.
+    """
+    guild_id, channel_id, message_id = [
+        int(x) for x in loader.constrcutc_scalar(node).split()]
+    return lambda: _bot.get_guild(guild_id).get_channel(channel_id).fetch_message(message_id)
+
+
 def _role_constructor(loader: yaml.Loader, node: yaml.Node):
     """Implements a custom YAML tak for loading `discord.Role` objects.
 

@@ -1,6 +1,10 @@
+"""
+Ditto Discord Bot
+
+"""
+
 import asyncio
 import datetime
-import inspect
 import logging
 import traceback
 
@@ -58,9 +62,9 @@ async def on_ready():
 
 
 @bot.event
-async def on_command_error(ctx: commands.Context, e: Exception):
+async def on_command_error(ctx: commands.Context, error: Exception):
     # Ignore if CommandNotFound
-    if isinstance(e, commands.CommandNotFound):
+    if isinstance(error, commands.CommandNotFound):
         return
 
     # Ignore if command has on error handler
@@ -73,24 +77,24 @@ async def on_command_error(ctx: commands.Context, e: Exception):
             return
 
     # Respond with error message if CheckFailure, CommandDisabled, CommandOnCooldown or UserInputError
-    if isinstance(e, (commands.CheckFailure, commands.CommandOnCooldown, commands.UserInputError)):
+    if isinstance(error, (commands.CheckFailure, commands.CommandOnCooldown, commands.UserInputError)):
         return await ctx.send(embed=discord.Embed(
             title=f'Error with command: {ctx.command.name}',
-            description=str(e)
+            description=str(error)
         ))
 
     # Otherwise log error
     bot.log.error(f'Error with command: {ctx.command.name}')
-    bot.log.error(f'{type(e).__name__}: {e}')
+    bot.log.error(f'{type(error).__name__}: {error}')
     bot.log.error(
-        "".join(traceback.format_exception(type(e), e, e.__traceback__)))
+        "".join(traceback.format_exception(type(error), error, error.__traceback__)))
 
     embed = discord.Embed()
 
     # Send to user
     embed = discord.Embed(
         title=f'Error with command: {ctx.command.name}',
-        description=f'```py\n{type(e).__name__}: {e}\n```'
+        description=f'```py\n{type(error).__name__}: {error}\n```'
     )
     await ctx.send(embed=embed)
 
@@ -107,11 +111,11 @@ if __name__ == "__main__":
     for extension in BOT_CONFIG.EXTENSIONS:
         try:
             bot.load_extension(extension)
-        except Exception as e:
+        except commands.ExtensionFailed as error:
             bot.log.error(f'Failed to load extension: {extension}')
-            bot.log.error(f'\t{type(e).__name__}: {e}')
+            bot.log.error(f'\t{type(error).__name__}: {error}')
             bot.log.error(
-                "".join(traceback.format_exception(type(e), e, e.__traceback__)))
+                "".join(traceback.format_exception(type(error), error, error.__traceback__)))
 
     # setup database
     run = asyncio.get_event_loop().run_until_complete

@@ -57,6 +57,7 @@ class EmbedPaginator(commands.Paginator):
 
 
 class EmbedHelpCommand(commands.DefaultHelpCommand):
+    """Custom Embed Help Command"""
 
     def __init__(self, **options):
         super().__init__(**options, paginator=options.pop('paginator', EmbedPaginator()))
