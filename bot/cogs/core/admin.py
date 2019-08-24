@@ -83,7 +83,7 @@ class Admin(commands.Cog):
     async def eval(self, ctx: commands.Context, *, body: Code):
         """Evaluates python code.
 
-        `code`: Python code to evaluate, new expressions are seperated with a `;`.
+        `code`: Python code to evaluate.
         """
         env = {
             'bot': self.bot,
