@@ -86,6 +86,7 @@ class Admin(commands.Cog):
         `code`: Python code to evaluate.
         """
         env = {
+            'CONFIG': BOT_CONFIG,
             'bot': self.bot,
             'ctx': ctx,
             'channel': ctx.channel,

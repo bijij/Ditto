@@ -24,3 +24,5 @@
     'bot.cogs.core.git': ~
     'bot.cogs.core.status': ~
     
+    # Metrics Functionality
+    'bot.cogs.metrics': ~

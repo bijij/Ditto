@@ -10,8 +10,9 @@ autopep8 = "*"
 [packages]
 discord-py = "*"
 donphan = {git = "https://github.com/bijij/Donphan.git"}
+pillow = "*"
 pyyaml = "*"
-uvloop = {version = "*", os_name = "== 'posix'"}
+uvloop = {version = "*",os_name = "== 'posix'"}
 
 [requires]
 python_version = "3.7"
