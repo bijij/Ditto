@@ -91,7 +91,7 @@ class Metrics(commands.Cog):
                 name='Members:', value=', '.join(str(m) for m in role.members) or 'None', inline=False
             )
         else:
-            embed.add_filed(
+            embed.add_field(
                 name='Member Count:', value=len(role.members)
             )
 
@@ -176,7 +176,7 @@ class Metrics(commands.Cog):
                     name='Roles:', value=', '.join(str(m) for m in user.roles[1:]) or 'None', inline=False
                 )
             else:
-                embed.add_filed(
+                embed.add_field(
                     name='Role Count:', value=len(user.roles[1:])
                 )
 
