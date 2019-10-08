@@ -14,6 +14,8 @@
 
   TOKEN: !ENV 'TOKEN'
 
+  ERROR_LOG_CHANNEL: !Channel 1234567891234 1234567891234
+
   PREFIXES:
     - "!"
   
@@ -26,3 +28,5 @@
     
     # Metrics Functionality
     'bot.cogs.metrics': ~
+    'bot.cogs.metrics.command_stats': ~
+    'bot.cogs.metrics.socket_stats': ~
