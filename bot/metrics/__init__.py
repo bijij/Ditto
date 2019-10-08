@@ -9,20 +9,21 @@ from discord.ext import commands
 from PIL import Image
 
 from bot.utils.converters import Guild, User
-
-
-def format_dt(dt):
-    return dt.strftime('%F @ %T UTC')
+from bot.utils.tools import format_dt
 
 
 class Metrics(commands.Cog):
+    """Retrieve information on specific things."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
     @commands.command(name='server_info', aliases=['serverinfo'])
     async def server_info(self, ctx: commands.Context, *, guild: Guild = None):
-        """Get information on a server."""
+        """Get information on a server.
+
+        `guild`: The server to get information on by ID.
+        """
 
         guild = guild or ctx.guild
 
@@ -60,7 +61,10 @@ class Metrics(commands.Cog):
 
     @commands.command(name='role_info', aliases=['roleinfo'])
     async def role_info(self, ctx: commands.Context, *, role: discord.Role = None):
-        """Get information on a role."""
+        """Get information on a role.
+
+        `role`: The role to get information on by name, ID, or mention.
+        """
 
         # If role was not specified
         if role is None:
@@ -79,9 +83,9 @@ class Metrics(commands.Cog):
         ).add_field(
             name='Permissions:', value=f'[Permissions list](https://discordapi.com/permissions.html#{role.permissions.value})'
         ).add_field(
-            name='Displayed Seperately:', value='Yes' if role.hoist else 'No'
+            name='Displayed Separately:', value='Yes' if role.hoist else 'No'
         ).add_field(
-            name='Is Mentionalble:', value='Yes' if role.mentionable else 'No'
+            name='Is Mentionable:', value='Yes' if role.mentionable else 'No'
         ).add_field(
             name='Colour:', value=role.colour if role.colour.value else 'None'
         )
@@ -99,7 +103,10 @@ class Metrics(commands.Cog):
 
     @commands.command(name='channel_info', aliases=['channelinfo'])
     async def channel_info(self, ctx: commands.Context, *, channel: Union[discord.TextChannel, discord.VoiceChannel, discord.CategoryChannel] = None):
-        """Get information on a channel."""
+        """Get information on a channel.
+
+        `channel[Optional]`: The channel to get information on by name, ID, or mention. If none specified it defaults to the channel you're in.
+        """
 
         channel = channel or ctx.channel
 
@@ -128,11 +135,11 @@ class Metrics(commands.Cog):
 
         if isinstance(channel, discord.TextChannel):
             embed.add_field(
-                name='Channel Description:', value=channel.topic
+                name='Channel Description:', value=channel.topic or 'None set.'
             ).add_field(
                 name='Is NSFW:', value='Yes' if channel.is_nsfw() else 'No'
             ).add_field(
-                name='Is News Channe:', value='Yes' if channel.is_news() else 'No'
+                name='Is News Channel:', value='Yes' if channel.is_news() else 'No'
             )
 
         elif isinstance(channel, discord.VoiceChannel):
@@ -146,7 +153,10 @@ class Metrics(commands.Cog):
 
     @commands.command(name='user_info', aliases=['userinfo'])
     async def user_info(self, ctx: commands.Context, *, user: Union[discord.Member, User] = None):
-        """Get information on a user."""
+        """Get information on a user.
+
+        `user[Optional]`: The user to get information on by name, ID, or mention. If none specified it defaults to you.
+        """
 
         user = user or ctx.author
 
@@ -188,7 +198,10 @@ class Metrics(commands.Cog):
 
     @commands.command(name='emoji_info', aliases=['emojiinfo'])
     async def emoji_info(self, ctx: commands.Context, *, emoji: Union[discord.Emoji, discord.PartialEmoji] = None):
-        """Get information on an emoji."""
+        """Get information on an emoji.
+
+        `emoji`: The emoji to get information on by name, ID or by the emoji itself.
+        """
 
         # If emoji was not specified
         if emoji is None:
@@ -198,7 +211,7 @@ class Metrics(commands.Cog):
         if isinstance(emoji, discord.PartialEmoji):
             if emoji.is_unicode_emoji():
                 raise commands.BadArgument(
-                    'Cannot retrive information on Unicode emoji.')
+                    'Cannot retrieve information on Unicode emoji.')
 
         embed = discord.Embed().set_author(
             name=f'Information on {emoji.name}:'
@@ -223,7 +236,10 @@ class Metrics(commands.Cog):
 
     @commands.command(name='invite_info', aliases=['inviteinfo'])
     async def invite_info(self, ctx: commands.Context, *, invite: discord.Invite = None):
-        """Get information on a server invite."""
+        """Get information on a server invite.
+
+        `invite`: The server invite to get information on, either by name, or the url.
+        """
 
         # If invite was not specified
         if invite is None:
@@ -242,7 +258,7 @@ class Metrics(commands.Cog):
         ).add_field(
             name='Channel:', value=invite.channel
         ).add_field(
-            name='Uses:', value=invite.uses or 'Unknwon'
+            name='Uses:', value=invite.uses or 'Unknown'
         ).add_field(
             name='Max Uses:', value=invite.max_uses or 'Infinite'
         )
@@ -251,7 +267,10 @@ class Metrics(commands.Cog):
 
     @commands.command(name='color_info', aliases=['colour_info', 'colorinfo', 'colourinfo'])
     async def colour_info(self, ctx: commands.Context, *, colour: discord.Colour = None):
-        """Get information on a colour."""
+        """Get information on a colour.
+
+        `colour:` The colour to get information on by hex or integer value.
+        """
 
         # If colour was not specified
         if colour is None:
@@ -278,8 +297,13 @@ class Metrics(commands.Cog):
             await ctx.send(embed=embed, file=discord.File(fp_out, f'{colour.value:0>6x}.png'))
 
     @commands.command(name='get')
-    async def get(self, ctx: commands.Context, *, item: Union[Guild, discord.Role, discord.TextChannel, discord.VoiceChannel, discord.CategoryChannel, discord.Member, User, discord.Emoji, discord.PartialEmoji, discord.Invite, discord.Colour] = None):
-        """Get information on something."""
+    async def get(self, ctx: commands.Context, *, item: Union[Guild, discord.Role, discord.TextChannel, discord.VoiceChannel,
+                                                              discord.CategoryChannel, discord.Member, User, discord.Emoji,
+                                                              discord.PartialEmoji, discord.Invite, discord.Colour] = None):
+        """Get information on something.
+
+        `item`: The item to get information on; items are looked in the following order: Server, Role, Channel, User, Emoji, Invite, Colour.
+        """
 
         if isinstance(item, discord.Guild):
             return await ctx.invoke(self.server_info, guild=item)
@@ -303,7 +327,7 @@ class Metrics(commands.Cog):
             return await ctx.invoke(self.colour_info, colour=item)
 
         raise commands.BadArgument(
-            f'Could not find infromation on item: {item}')
+            f'Could not find information on item: {item}')
 
 
 def setup(bot: commands.Bot):

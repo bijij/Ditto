@@ -3,7 +3,6 @@ import asyncio
 import discord
 from discord.ext import commands
 
-from bot.config import config as BOT_CONFIG
 from bot.utils import checks
 
 

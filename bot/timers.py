@@ -2,7 +2,6 @@ import asyncio
 import datetime
 
 import discord
-from discord.ext import commands
 
 import asyncpg
 from donphan import Column, MaybeAcquire, Table
@@ -11,10 +10,10 @@ _active_timer = None
 _bot = None
 
 
-class Timers(Table):
+class _Timers(Table):
     id: int = Column(primary_key=True, auto_increment=True)
     created_at: datetime.datetime = Column(nullable=False, default='NOW()')
-    expires_at: datetime.datetime = Column(nullable=False)
+    expires_at: datetime.datetime = Column(nullable=False, index=True)
     event_type: str = Column(nullable=False)
     data: dict = Column(nullable=False, default={})
 
@@ -51,13 +50,17 @@ class Timer:
         except AttributeError:
             return False
 
+    def __hash__(self):
+        return hash(self.id)
+
     def __repr__(self):
         return f'<Timer id={self.id} created_at={self.created_at} expires_at={self.expires_at} event_type={self.event_type}>'
 
 
 async def get_active_timer(connection=None, days=7) -> Timer:
     # Fetch upcoming timer from database
-    record = await Timers.fetchrow_where('expires_at < (CURRENT_DATE + $1::interval) ORDER BY expires_at LIMIT 1', (datetime.timedelta(days=days),), connection=connection)
+    record = await _Timers.fetchrow_where(
+        'expires_at < (CURRENT_DATE + $1::interval) ORDER BY expires_at LIMIT 1', (datetime.timedelta(days=days),), connection=connection)
     return Timer(record) if record else None
 
 
@@ -86,7 +89,7 @@ def _dispatch_timer_event(timer: Timer):
 
 async def _call_timer(timer: Timer):
     # delete timer from database
-    await Timers.delete_where('id = $1', (timer.id,))
+    await _Timers.delete_where('id = $1', (timer.id,))
     _dispatch_timer_event(timer)
 
 
@@ -97,7 +100,8 @@ async def _call_short_timer(seconds: int, timer: Timer):
 
 async def _dispatch_timers():
 
-    await Timers.create()
+    # Ensure timers table exists.
+    await _Timers.create()
 
     try:
         while not _bot.is_closed():
@@ -112,9 +116,10 @@ async def _dispatch_timers():
 
             # dispatch the event
             await _call_timer(timer)
+
     except asyncio.CancelledError:
         pass
-    except (OSError, discord.ConnectionClosed):
+    except (OSError, discord.ConnectionClosed, asyncpg.PostgresConnectionError):
         _bot._timer_task.cancel()
         _bot._timer_task = _bot.loop.create_task(_dispatch_timers())
     except Exception as e:
@@ -140,8 +145,8 @@ async def create_timer(expires_at: datetime.datetime, event_type: str, *args, **
         return timer
 
     # Store the timer in the database
-    record = await Timers.insert(
-        returning=Timers.id,
+    record = await _Timers.insert(
+        returning=_Timers.id,
         created_at=now,
         expires_at=expires_at,
         event_type=event_type,
@@ -161,6 +166,8 @@ async def create_timer(expires_at: datetime.datetime, event_type: str, *args, **
         _bot._timer_task.cancel()
         _bot._timer_task = _bot.loop.create_task(_dispatch_timers())
 
+    return timer
+
 
 async def delete_timer(record: asyncpg.Record):
     """Deletes an upcoming timer
@@ -168,9 +175,9 @@ async def delete_timer(record: asyncpg.Record):
     Args:
         record (asyncpg.Record): the timer's database record to delete.
     """
-    await Timers.delete_record(record)
+    await _Timers.delete_record(record)
 
     # if the current timer is being deleted
     if _bot._current_timer and _bot._current_timer.id == id:
         _bot._timer_task.cancel()
-        _bot._taks = _bot.loop.create_task(_dispatch_timers())
+        _bot._timer_task = _bot.loop.create_task(_dispatch_timers())

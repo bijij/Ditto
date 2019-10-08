@@ -1,7 +1,6 @@
+
 import copy
-import inspect
 import io
-import re
 import textwrap
 import traceback
 
@@ -16,9 +15,11 @@ from bot.utils import checks
 
 
 # Extra imports for eval
+import asyncio
 import datetime
-
 import donphan
+import inspect
+import re
 
 
 class Code:
@@ -40,31 +41,46 @@ class Admin(commands.Cog):
     async def cog_check(self, ctx: commands.Context) -> bool:
         return await checks.is_owner(ctx)
 
-    @commands.command(name='load')
-    async def load(self, ctx: commands.Context, extension: str):
-        """Loads an extension."""
-        self.bot.log.info(f'Loading extension: {extension}')
-        self.bot.load_extension(extension)
+    @commands.command(name='load', hidden=True)
+    async def load(self, ctx: commands.Context, cog: str):
+        """Loads a cog.
+
+        `cog`: The cog to load.
+        """
+        cog = f'bot.cogs.{cog}'
+
+        self.bot.load_extension(cog)
         await ctx.send(embed=discord.Embed(
-            title=f'Succesfully loaded extension: {extension}.'
+            title=f'Successfully loaded extension: {cog}',
+            colour=0xf44336
         ))
 
-    @commands.command(name='unload')
-    async def unload(self, ctx: commands.Context, extension: str):
-        """Loads an extension."""
-        self.bot.log.info(f'Unloading extension: {extension}')
-        self.bot.unload_extension(extension)
+    @commands.command(name='unload', hidden=True)
+    async def unload(self, ctx: commands.Context, cog: str):
+        """Unloads a cog.
+
+        `cog`: The cog to unload.
+        """
+        cog = f'bot.cogs.{cog}'
+
+        self.bot.unload_extension(cog)
         await ctx.send(embed=discord.Embed(
-            title=f'Succesfully unloaded extension: {extension}.'
+            title=f'Successfully unloaded extension: {cog}',
+            colour=0xf44336
         ))
 
-    @commands.command(name='reload')
-    async def reload(self, ctx: commands.Context, extension: str):
-        """Loads an extension."""
-        self.bot.log.info(f'Reloading extension: {extension}')
-        self.bot.reload_extension(extension)
+    @commands.command(name='reload', hidden=True)
+    async def reload(self, ctx: commands.Context, cog: str):
+        """Reloads a cog.
+
+        `cog`: The cog to reload.
+        """
+        cog = f'bot.cogs.{cog}'
+
+        self.bot.reload_extension(cog)
         await ctx.send(embed=discord.Embed(
-            title=f'Succesfully reloaded extension: {extension}.'
+            title=f'Successfully reloaded extension: {cog}',
+            colour=0xf44336
         ))
 
     @commands.command(name="sudo")
@@ -109,7 +125,7 @@ class Admin(commands.Cog):
         try:
             with redirect_stdout(stdout):
                 ret = await func()
-        except Exception as e:
+        except Exception:
             value = stdout.getvalue()
             await ctx.send(f'```py\n{value}{traceback.format_exc()}\n```')
         else:

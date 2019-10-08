@@ -1,3 +1,5 @@
+import json
+
 import discord
 from discord.ext import commands
 
@@ -51,7 +53,9 @@ class Embed(commands.Converter):
 
     async def convert(self, ctx: commands.Context, argument: str):
         try:
+            if argument.startswith('```') and argument.endswith('```'):
+                return discord.Embed.from_dict(json.loads('\n'.join(argument.split('\n')[1:-1])))
             return discord.Embed.from_dict(json.loads(argument))
-        except:
+        except Exception:
             raise commands.BadArgument(
                 'Could not generate embed from supplied JSON.')

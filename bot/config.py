@@ -1,7 +1,4 @@
 import os
-from dataclasses import dataclass, field
-from types import LambdaType
-from typing import Any, Dict, List, Mapping
 
 import discord
 import yaml
@@ -48,6 +45,7 @@ def _env_var_constructor(loader: yaml.Loader, node: yaml.Node):
 
 
 def _generate_constructor(func):
+    """Generates a constructor for a discord object given a function"""
 
     def constructor(loader: yaml.Loader, node: yaml.Node):
         ids = [int(x) for x in loader.construct_scalar(node).split()]
@@ -67,28 +65,27 @@ class Config(yaml.YAMLObject):
         return f"<Config {' '.join(f'{key}={repr(value)}' for key, value in self.__dict__.items())}>"
 
 
-DISCORD_CONSTRUCTORS = [
+CONSTRUCTORS = {
+    # Core constructors
+    'Config': Config.from_yaml,
+    'ENV': _env_var_constructor,
 
     # Discord constructors
-    ("Emoji", lambda e: _bot.get_emoji(e)),
-    ("Guild", lambda g: _bot.get_guild(g)),
-    ("User", lambda u: _bot.get_user(u)),
+    'Emoji': _generate_constructor(lambda e: _bot.get_emoji(e)),
+    'Guild': _generate_constructor(lambda g: _bot.get_guild(g)),
+    'User': _generate_constructor(lambda u: _bot.get_user(u)),
 
     # Discord Guild dependant constructors
-    ("Channel", lambda g, c: _bot.get_guild(g).get_channel(c)),
-    ("Member", lambda g, m: _bot.get_guild(g).get_member(m)),
-    ("Role", lambda g, r: _bot.get_guild(g).get_role(r)),
-]
+    'Channel': _generate_constructor(lambda g, c: _bot.get_guild(g).get_channel(c)),
+    'Member': _generate_constructor(lambda g, m: _bot.get_guild(g).get_member(m)),
+    'Role': _generate_constructor(lambda g, r: _bot.get_guild(g).get_role(r)),
+}
 
 
 # Add constructors
-yaml.FullLoader.add_constructor('!Config', Config.from_yaml)
-yaml.FullLoader.add_constructor('!ENV', _env_var_constructor)
-
-# Add discord specific constructors
-for key, func in DISCORD_CONSTRUCTORS:
-    yaml.FullLoader.add_constructor(
-        f'!{key}', _generate_constructor(func))
+for key, constructor in CONSTRUCTORS.items():
+    Config.from_yaml
+    yaml.FullLoader.add_constructor(f'!{key}', constructor)
 
     # Load the config
 with open("config.yml", encoding="UTF-8") as f:
