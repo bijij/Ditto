@@ -1,0 +1,5 @@
+[flake8]
+show-source=true
+ignore = F401,F403
+exclude = .git,__pycache__,.github,res
+max-line-length = 160
