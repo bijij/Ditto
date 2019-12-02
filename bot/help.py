@@ -31,7 +31,7 @@ Everything else credit to SirThane#1780
 
 
 from asyncio import sleep
-from discord import Colour, DMChannel, Embed, HTTPException, Member, Message, Reaction, User
+from discord import Colour, DMChannel, Embed, Member, Message, Reaction, User
 from discord.abc import Messageable
 from discord.ext.commands import Cog, Command, Context, Group
 from discord.ext.commands.help import HelpCommand as BaseHelpCommand
