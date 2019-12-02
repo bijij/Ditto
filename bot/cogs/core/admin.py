@@ -11,7 +11,7 @@ import discord
 from discord.ext import commands
 
 from bot.config import config as BOT_CONFIG
-from bot.utils import checks
+from bot.utils import checks, converters
 
 
 # Extra imports for eval
@@ -20,15 +20,6 @@ import datetime
 import donphan
 import inspect
 import re
-
-
-class Code:
-
-    @classmethod
-    async def convert(cls, ctx: commands.Context, argument: str):
-        if argument.startswith('```') and argument.endswith('```'):
-            return '\n'.join(argument.split('\n')[1:-1])
-        return argument.strip('` \n')
 
 
 class Admin(commands.Cog):
@@ -40,48 +31,6 @@ class Admin(commands.Cog):
 
     async def cog_check(self, ctx: commands.Context) -> bool:
         return await checks.is_owner(ctx)
-
-    @commands.command(name='load', hidden=True)
-    async def load(self, ctx: commands.Context, cog: str):
-        """Loads a cog.
-
-        `cog`: The cog to load.
-        """
-        cog = f'bot.cogs.{cog}'
-
-        self.bot.load_extension(cog)
-        await ctx.send(embed=discord.Embed(
-            title=f'Successfully loaded extension: {cog}',
-            colour=0xf44336
-        ))
-
-    @commands.command(name='unload', hidden=True)
-    async def unload(self, ctx: commands.Context, cog: str):
-        """Unloads a cog.
-
-        `cog`: The cog to unload.
-        """
-        cog = f'bot.cogs.{cog}'
-
-        self.bot.unload_extension(cog)
-        await ctx.send(embed=discord.Embed(
-            title=f'Successfully unloaded extension: {cog}',
-            colour=0xf44336
-        ))
-
-    @commands.command(name='reload', hidden=True)
-    async def reload(self, ctx: commands.Context, cog: str):
-        """Reloads a cog.
-
-        `cog`: The cog to reload.
-        """
-        cog = f'bot.cogs.{cog}'
-
-        self.bot.reload_extension(cog)
-        await ctx.send(embed=discord.Embed(
-            title=f'Successfully reloaded extension: {cog}',
-            colour=0xf44336
-        ))
 
     @commands.command(name="sudo")
     async def sudo(self, ctx, user: Union[discord.Member, discord.User], *, command: str):
@@ -96,7 +45,7 @@ class Admin(commands.Cog):
             raise e.original
 
     @commands.command(name='eval')
-    async def eval(self, ctx: commands.Context, *, body: Code):
+    async def eval(self, ctx: commands.Context, *, body: converters.Code):
         """Evaluates python code.
 
         `code`: Python code to evaluate.

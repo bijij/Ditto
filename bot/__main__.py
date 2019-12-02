@@ -15,8 +15,6 @@ from donphan import create_pool, create_tables, create_views
 import bot.config as config
 import bot.timers as timers
 
-from bot.help import EmbedHelpCommand
-
 from bot.config import config as BOT_CONFIG
 
 try:
@@ -24,7 +22,7 @@ try:
 except ImportError:
     pass
 else:
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    uvloop.install()
 
 _start_time = datetime.datetime.utcnow()
 
@@ -33,12 +31,12 @@ config._bot = timers._bot = bot = commands.Bot(
     command_prefix=commands.when_mentioned_or(*BOT_CONFIG.PREFIXES),
     activity=discord.Activity(
         name=f"for Commands: {BOT_CONFIG.PREFIXES[0]}help", type=discord.ActivityType.watching),
-    case_insensitive=True,
-    help_command=EmbedHelpCommand(dm_help=None, dm_help_threshold=500),
+    case_insensitive=True
 )
 
 bot.__version__ = BOT_CONFIG.VERSION
 bot._start_time = _start_time
+bot.dm_help = False
 
 # Setup logging
 bot.log = logging.getLogger(__name__)
@@ -107,6 +105,9 @@ async def on_command_error(ctx: commands.Context, error: Exception):
 
 if __name__ == "__main__":
 
+    # Load help extension
+    bot.load_extension('bot.help')
+
     # Load extensions from config
     for extension in BOT_CONFIG.EXTENSIONS:
         try:
@@ -118,6 +119,7 @@ if __name__ == "__main__":
                 "".join(traceback.format_exception(type(error), error, error.__traceback__)))
 
     # setup database
+    bot.log.info('Setting up Database...')
     run = asyncio.get_event_loop().run_until_complete
     run(create_pool(BOT_CONFIG.DONPHAN.DSN, server_settings={
         'application_name': BOT_CONFIG.DONPHAN.APPLICATION_NAME}
@@ -130,4 +132,5 @@ if __name__ == "__main__":
     bot._current_timer = None
     bot._timer_task = bot.loop.create_task(timers._dispatch_timers())
 
+    bot.log.info('Logging in...')
     bot.run(BOT_CONFIG.TOKEN)

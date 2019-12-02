@@ -3,7 +3,14 @@ import os
 import discord
 import yaml
 
-_bot = None
+from bot.utils.tools import RawMessage
+
+_bot: discord.Client = None
+
+
+def load():
+    with open('config.yml', encoding='UTF-8') as f:
+        return yaml.load(f, Loader=yaml.FullLoader)
 
 
 class HiddenRepr(str):
@@ -45,7 +52,6 @@ def _env_var_constructor(loader: yaml.Loader, node: yaml.Node):
 
 
 def _generate_constructor(func):
-    """Generates a constructor for a discord object given a function"""
 
     def constructor(loader: yaml.Loader, node: yaml.Node):
         ids = [int(x) for x in loader.construct_scalar(node).split()]
@@ -61,32 +67,38 @@ class Config(yaml.YAMLObject):
         for name, value in kwargs:
             setattr(self, name, value)
 
+    def __reload__(self):
+        self.__dict__ = load().__dict__
+        _bot.__version__ = self.VERSION
+
     def __repr__(self):
-        return f"<Config {' '.join(f'{key}={repr(value)}' for key, value in self.__dict__.items())}>"
+        return f'<Config {" ".join(f"{key}={repr(value)}" for key, value in self.__dict__.items())}>'
 
 
-CONSTRUCTORS = {
-    # Core constructors
-    'Config': Config.from_yaml,
-    'ENV': _env_var_constructor,
+DISCORD_CONSTRUCTORS = [
 
     # Discord constructors
-    'Emoji': _generate_constructor(lambda e: _bot.get_emoji(e)),
-    'Guild': _generate_constructor(lambda g: _bot.get_guild(g)),
-    'User': _generate_constructor(lambda u: _bot.get_user(u)),
+    ('Emoji', lambda e: _bot.get_emoji(e)),
+    ('Guild', lambda g: _bot.get_guild(g)),
+    ('User', lambda u: _bot.get_user(u)),
 
     # Discord Guild dependant constructors
-    'Channel': _generate_constructor(lambda g, c: _bot.get_guild(g).get_channel(c)),
-    'Member': _generate_constructor(lambda g, m: _bot.get_guild(g).get_member(m)),
-    'Role': _generate_constructor(lambda g, r: _bot.get_guild(g).get_role(r)),
-}
+    ('Channel', lambda g, c: _bot.get_guild(g).get_channel(c)),
+    ('Member', lambda g, m: _bot.get_guild(g).get_member(m)),
+    ('Role', lambda g, r: _bot.get_guild(g).get_role(r)),
+    ('Message', lambda g, c, m: RawMessage(_bot, _bot.get_guild(g).get_channel(c), m))
+
+]
 
 
 # Add constructors
-for key, constructor in CONSTRUCTORS.items():
-    Config.from_yaml
-    yaml.FullLoader.add_constructor(f'!{key}', constructor)
+yaml.FullLoader.add_constructor('!Config', Config.from_yaml)
+yaml.FullLoader.add_constructor('!ENV', _env_var_constructor)
 
-    # Load the config
-with open("config.yml", encoding="UTF-8") as f:
-    config: Config = yaml.load(f, Loader=yaml.FullLoader)
+# Add discord specific constructors
+for key, func in DISCORD_CONSTRUCTORS:
+    yaml.FullLoader.add_constructor(
+        f'!{key}', _generate_constructor(func))
+
+# Load the config
+config: Config = load()

@@ -49,13 +49,18 @@ class User(commands.IDConverter):
             return result
 
 
-class Embed(commands.Converter):
+class Code(commands.Converter):
+    async def convert(self, ctx: commands.Context, argument: str):
+        if argument.startswith('```') and argument.endswith('```'):
+            return '\n'.join(argument.split('\n')[1:-1])
+        return argument.strip('` \n')
 
+
+class Embed(commands.Converter):
     async def convert(self, ctx: commands.Context, argument: str):
         try:
-            if argument.startswith('```') and argument.endswith('```'):
-                return discord.Embed.from_dict(json.loads('\n'.join(argument.split('\n')[1:-1])))
-            return discord.Embed.from_dict(json.loads(argument))
+            code = await Code().convert(ctx, argument)
+            return discord.Embed.from_dict(json.loads(code))
         except Exception:
             raise commands.BadArgument(
                 'Could not generate embed from supplied JSON.')
