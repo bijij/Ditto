@@ -8,7 +8,7 @@ autopep8 = "*"
 flake8 = "*"
 
 [packages]
-discord-py = "*"
+discord-py = {git = "https://github.com/rapptz/discord.py.git"}
 donphan = {git = "https://github.com/bijij/Donphan.git"}
 pillow = "*"
 pyyaml = "*"
