@@ -60,7 +60,8 @@ class Timer:
 async def get_active_timer(connection=None, days=7) -> Timer:
     # Fetch upcoming timer from database
     record = await _Timers.fetchrow_where(
-        'expires_at < (CURRENT_DATE + $1::interval) ORDER BY expires_at LIMIT 1', (datetime.timedelta(days=days),), connection=connection)
+        'expires_at < (CURRENT_DATE + $1::interval)', (datetime.timedelta(days=days),), 
+        connection=connection, order_by='expires_at')
     return Timer(record) if record else None
 
 
