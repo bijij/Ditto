@@ -8,7 +8,7 @@ from discord.ext import commands
 
 from PIL import Image
 
-from bot.utils.converters import Guild, User
+from bot.utils.converters import Colour, Guild, User
 from bot.utils.tools import format_dt
 
 
@@ -266,7 +266,7 @@ class Metrics(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(name='color_info', aliases=['colour_info', 'colorinfo', 'colourinfo'])
-    async def colour_info(self, ctx: commands.Context, *, colour: discord.Colour = None):
+    async def colour_info(self, ctx: commands.Context, *, colour: Colour = None):
         """Get information on a colour.
 
         `colour:` The colour to get information on by hex or integer value.
@@ -299,7 +299,7 @@ class Metrics(commands.Cog):
     @commands.command(name='get')
     async def get(self, ctx: commands.Context, *, item: Union[Guild, discord.Role, discord.TextChannel, discord.VoiceChannel,
                                                               discord.CategoryChannel, discord.Member, User, discord.Emoji,
-                                                              discord.PartialEmoji, discord.Invite, discord.Colour] = None):
+                                                              discord.PartialEmoji, discord.Invite, Colour] = None):
         """Get information on something.
 
         `item`: The item to get information on; items are looked in the following order: Server, Role, Channel, User, Emoji, Invite, Colour.
