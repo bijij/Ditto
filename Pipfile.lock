@@ -18,7 +18,7 @@
     "default": {
         "discord-py": {
             "git": "https://github.com/rapptz/discord.py.git",
-            "ref": "d9a8ae9c78f5ca0eef5e1f033b4151ece4ed1028"
+            "ref": "6847f131980c921880599562a5e1ce5d5634610c"
         },
         "donphan": {
             "git": "https://github.com/bijij/Donphan.git",
