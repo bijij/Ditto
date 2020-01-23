@@ -13,8 +13,5 @@ pillow = "*"
 pyyaml = "*"
 uvloop = {version = "*",os_name = "== 'posix'"}
 
-[requires]
-python_version = "3.7"
-
 [scripts]
 start = "python -m bot"
