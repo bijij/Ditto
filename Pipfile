@@ -9,7 +9,7 @@ flake8 = "*"
 
 [packages]
 discord-py = "*"
-donphan = {git = "https://github.com/bijij/Donphan.git"}
+donphan = "*"
 pillow = "*"
 pyyaml = "*"
 uvloop = {version = "*",os_name = "== 'posix'"}
