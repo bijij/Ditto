@@ -1,9 +1,6 @@
-import asyncio
-
 import discord
 from discord.ext import commands
 
-from bot.config import config as BOT_CONFIG
 from bot.utils import checks
 
 
@@ -12,6 +9,13 @@ class Status(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    @commands.command(name='ping')
+    @commands.check(checks.is_owner)
+    async def ping(self, ctx: commands.Context):
+        """Determines the bots current latency"""
+        message = await ctx.send('Pong!')
+        await message.edit(content=f'Pong! Latency: `{(message.created_at - ctx.message.created_at).total_seconds()}s`')
 
     @commands.command(name='status')
     @commands.check(checks.is_owner)

@@ -1,6 +1,10 @@
+"""
+Ditto Discord Bot
+
+"""
+
 import asyncio
 import datetime
-import inspect
 import logging
 import traceback
 
@@ -9,8 +13,6 @@ from discord.ext import commands
 
 import bot.config as config
 
-from bot.help import EmbedHelpCommand
-
 from bot.config import config as BOT_CONFIG
 
 try:
@@ -18,7 +20,7 @@ try:
 except ImportError:
     pass
 else:
-    asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
+    uvloop.install()
 
 _start_time = datetime.datetime.utcnow()
 
@@ -27,12 +29,12 @@ config._bot = bot = commands.Bot(
     command_prefix=commands.when_mentioned_or(*BOT_CONFIG.PREFIXES),
     activity=discord.Activity(
         name=f"for Commands: {BOT_CONFIG.PREFIXES[0]}help", type=discord.ActivityType.watching),
-    case_insensitive=True,
-    help_command=EmbedHelpCommand(dm_help=None, dm_help_threshold=500),
+    case_insensitive=True
 )
 
 bot.__version__ = BOT_CONFIG.VERSION
 bot._start_time = _start_time
+bot.dm_help = False
 
 # Setup logging
 bot.log = logging.getLogger(__name__)
@@ -56,9 +58,9 @@ async def on_ready():
 
 
 @bot.event
-async def on_command_error(ctx: commands.Context, e: Exception):
+async def on_command_error(ctx: commands.Context, error: Exception):
     # Ignore if CommandNotFound
-    if isinstance(e, commands.CommandNotFound):
+    if isinstance(error, commands.CommandNotFound):
         return
 
     # Ignore if command has on error handler
@@ -71,24 +73,24 @@ async def on_command_error(ctx: commands.Context, e: Exception):
             return
 
     # Respond with error message if CheckFailure, CommandDisabled, CommandOnCooldown or UserInputError
-    if isinstance(e, (commands.CheckFailure, commands.CommandOnCooldown, commands.UserInputError)):
+    if isinstance(error, (commands.CheckFailure, commands.CommandOnCooldown, commands.UserInputError)):
         return await ctx.send(embed=discord.Embed(
             title=f'Error with command: {ctx.command.name}',
-            description=str(e)
+            description=str(error)
         ))
 
     # Otherwise log error
     bot.log.error(f'Error with command: {ctx.command.name}')
-    bot.log.error(f'{type(e).__name__}: {e}')
+    bot.log.error(f'{type(error).__name__}: {error}')
     bot.log.error(
-        "".join(traceback.format_exception(type(e), e, e.__traceback__)))
+        "".join(traceback.format_exception(type(error), error, error.__traceback__)))
 
     embed = discord.Embed()
 
     # Send to user
     embed = discord.Embed(
         title=f'Error with command: {ctx.command.name}',
-        description=f'```py\n{type(e).__name__}: {e}\n```'
+        description=f'```py\n{type(error).__name__}: {error}\n```'
     )
     await ctx.send(embed=embed)
 
@@ -101,14 +103,17 @@ async def on_command_error(ctx: commands.Context, e: Exception):
 
 if __name__ == "__main__":
 
+    # Load help extension
+    bot.load_extension('bot.help')
+
     # Load extensions from config
     for extension in BOT_CONFIG.EXTENSIONS:
         try:
             bot.load_extension(extension)
-        except Exception as e:
+        except commands.ExtensionFailed as error:
             bot.log.error(f'Failed to load extension: {extension}')
-            bot.log.error(f'\t{type(e).__name__}: {e}')
+            bot.log.error(f'\t{type(error).__name__}: {error}')
             bot.log.error(
-                "".join(traceback.format_exception(type(e), e, e.__traceback__)))
+                "".join(traceback.format_exception(type(error), error, error.__traceback__)))
 
     bot.run(BOT_CONFIG.TOKEN)

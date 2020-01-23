@@ -1,0 +1,8 @@
+[flake8]
+show-source=true
+ignore = F403
+exclude = .git,__pycache__,.github,res
+max-line-length = 160
+per-file-ignores =
+  bot/cogs/core/admin.py:F401
+  bot/utils/tools/__init__.py:F401

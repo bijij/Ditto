@@ -4,13 +4,14 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
-pylint = "*"
 autopep8 = "*"
+flake8 = "*"
 
 [packages]
 discord-py = "*"
+pillow = "*"
 pyyaml = "*"
-uvloop = {version = "*", os_name = "== 'posix'"}
+uvloop = {version = "*",os_name = "== 'posix'"}
 
 [requires]
 python_version = "3.7"

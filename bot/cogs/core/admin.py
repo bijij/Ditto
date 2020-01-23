@@ -1,34 +1,25 @@
-import copy
-import inspect
-import re
 
+import copy
+import io
+import textwrap
+import traceback
+
+from contextlib import redirect_stdout
 from typing import Union
 
 import discord
 from discord.ext import commands
 
 from bot.config import config as BOT_CONFIG
-from bot.utils import checks
+from bot.utils import checks, converters
 
 
-class Code:
-    exec_test = re.compile(
-        r"(?:^(?:(?:for)|(?:def)|(?:while)|(?:if)))|(?:^([a-z_][A-z0-9_\-\.]*)\s?(?:\+|-|\\|\*)?=)")
-
-    @classmethod
-    async def convert(cls, ctx: commands.Context, argument: str):
-
-        lines = argument.split(';')
-        result = []
-
-        for line in lines:
-            if cls.exec_test.match(line):
-                result.append(
-                    [line.strip(), cls.exec_test.match(line).group(1)])
-            else:
-                result.append([line.strip(), None])
-
-        return result
+# Extra imports for eval
+import asyncio
+import datetime
+import donphan
+import inspect
+import re
 
 
 class Admin(commands.Cog):
@@ -36,36 +27,10 @@ class Admin(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+        self._last_result = None  # For eval env
 
     async def cog_check(self, ctx: commands.Context) -> bool:
         return await checks.is_owner(ctx)
-
-    @commands.command(name='load')
-    async def load(self, ctx: commands.Context, extension: str):
-        """Loads an extension."""
-        self.bot.log.info(f'Loading extension: {extension}')
-        self.bot.load_extension(extension)
-        await ctx.send(embed=discord.Embed(
-            title=f'Succesfully loaded extension: {extension}.'
-        ))
-
-    @commands.command(name='unload')
-    async def unload(self, ctx: commands.Context, extension: str):
-        """Loads an extension."""
-        self.bot.log.info(f'Unloading extension: {extension}')
-        self.bot.unload_extension(extension)
-        await ctx.send(embed=discord.Embed(
-            title=f'Succesfully unloaded extension: {extension}.'
-        ))
-
-    @commands.command(name='reload')
-    async def reload(self, ctx: commands.Context, extension: str):
-        """Loads an extension."""
-        self.bot.log.info(f'Reloading extension: {extension}')
-        self.bot.reload_extension(extension)
-        await ctx.send(embed=discord.Embed(
-            title=f'Succesfully reloaded extension: {extension}.'
-        ))
 
     @commands.command(name="sudo")
     async def sudo(self, ctx, user: Union[discord.Member, discord.User], *, command: str):
@@ -80,48 +45,47 @@ class Admin(commands.Cog):
             raise e.original
 
     @commands.command(name='eval')
-    async def eval(self, ctx: commands.Context, *, code: Code = []):
+    async def eval(self, ctx: commands.Context, *, body: converters.Code):
         """Evaluates python code.
 
-        `code`: Python code to evaluate, new expressions are seperated with a `;`.
+        `code`: Python code to evaluate.
         """
         env = {
+            'CONFIG': BOT_CONFIG,
             'bot': self.bot,
             'ctx': ctx,
-            'BOT_CONFIG': BOT_CONFIG
+            'channel': ctx.channel,
+            'author': ctx.author,
+            'guild': ctx.guild,
+            'message': ctx.message,
+            '_': self._last_result
         }
+
         env.update(globals())
 
-        results = []
-        max_result_length = (
-            2000 - (10 + sum(len(line) + 6 for line, is_exec in code))) // len(code)
+        stdout = io.StringIO()
 
-        for line, is_exec in code:
-            try:
-                if is_exec is not None:
-                    exec(line, env)
-                    result = env.get(is_exec, None)
-                    if inspect.isawaitable(result):
-                        result = await result
-                        env.update({is_exec: result})
+        try:
+            exec(f'async def func():\n{textwrap.indent(body, "  ")}', env)
+        except Exception as e:
+            return await ctx.send(f'```py\n{e.__class__.__name__}: {e}\n```')
 
-                else:
-                    result = eval(line, env)
-                    if inspect.isawaitable(result):
-                        result = await result
+        func = env['func']
+        try:
+            with redirect_stdout(stdout):
+                ret = await func()
+        except Exception:
+            value = stdout.getvalue()
+            await ctx.send(f'```py\n{value}{traceback.format_exc()}\n```')
+        else:
+            value = stdout.getvalue()
 
-            except Exception as e:
-                result = f"{type(e).__name__}: {e}"
-
-            results.append([
-                line,
-                (str(result)[:max_result_length - 3] + "...") if len(str(result)) > max_result_length else str(result)])
-
-        response_string = "```py\n" + \
-            "\n".join([f">>> {line}\n{result}" for line, result in results]) + \
-            "\n```"
-
-        await ctx.send(response_string)
+            if ret is None:
+                if value:
+                    await ctx.send(f'```py\n{value}\n```')
+            else:
+                self._last_result = ret
+                await ctx.send(f'```py\n{value}{ret}\n```')
 
 
 def setup(bot: commands.Bot):
