@@ -1,0 +1,20 @@
+!Config
+
+  app_name: 'Ditto'
+
+  bot: !Config
+    prefix: '(!)'
+    token: !ENV BOT_TOKEN
+
+  logging: !Config
+    level: 'INFO'
+    webhook_url: !ENV LOGGING_WEBHOOK_URL
+
+  database: !Config
+    user: 'postgres'
+    password: !ENV DATABASE_PASSWORD
+    hostname: 'localhost'
+    database: 'ditto'
+
+  extensions:
+    jishaku: ~

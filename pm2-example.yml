@@ -1,4 +1,0 @@
-apps:
-  script: '/bin/bash'
-  name: 'Ditto'
-  args: ['-c', 'pipenv run start']

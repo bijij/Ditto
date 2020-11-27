@@ -1,0 +1,6 @@
+git+https://github.com/Rapptz/discord.py@master
+git+https://github.com/Rapptz/discord-ext-menus@master
+git+https://github.com/Ext-Creators/discord-ext-alternatives@master
+git+https://github.com/Gorialis/jishaku@master
+pyyaml>=5.3.1
+donphan>=2.6.0

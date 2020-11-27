@@ -1,9 +1,8 @@
 from discord.ext import commands
 
-
-__all__ = [
-    'auto_help'
-]
+__all__ = (
+    'auto_help',
+)
 
 
 async def _call_help(ctx: commands.Context):
